@@ -192,6 +192,32 @@
             justify-content: center;
         }
     </style>
+    <!-- scrollable table -->
+    <style>
+        .stats, .daily-tables {
+            max-height: 60vh; /* Restrict maximum height to 60% of the viewport */
+            overflow-y: auto; /* Enable vertical scrolling */
+            margin-top: 30px;
+        }
+    
+        .stats-table, .daily-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+    
+        .stats-table th, .stats-table td, 
+        .daily-table th, .daily-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+    
+        .stats-table th, .daily-table th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+    
     
 </head>
 <body>
