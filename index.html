@@ -147,6 +147,52 @@
             color: white;
         }
     </style>
+    <!-- center all element on the page -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+    
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 800px;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    
+        main {
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 10px 10px;
+        }
+    
+        .add-product input,
+        .add-product select,
+        .search-bar input {
+            margin: 10px auto;
+            display: block;
+        }
+    
+        .item-list {
+            justify-content: center;
+        }
+    </style>
+    
 </head>
 <body>
     <header>
@@ -254,44 +300,51 @@
         }
 
         function recordSale(itemName) {
-            const item = salesData[itemName];
+        const item = salesData[itemName];
 
-            if (item.unit === 'kg') {
-                const totalPrice = parseFloat(prompt(`Enter the total price for ${itemName} sold:`));
-                if (isNaN(totalPrice) || totalPrice <= 0) {
-                    alert('Invalid total price.');
-                    return;
-                }
-                const quantity = totalPrice / item.defaultPrice;
-                updateSaleData(itemName, quantity, totalPrice);
-            } else {
-                const quantity = parseFloat(prompt(`Enter the quantity of ${itemName} sold:`));
-                if (isNaN(quantity) || quantity <= 0) {
-                    alert('Invalid quantity.');
-                    return;
-                }
-                const totalPrice = quantity * item.defaultPrice;
-                updateSaleData(itemName, quantity, totalPrice);
+        if (item.unit === 'kg') {
+            const totalPrice = parseFloat(prompt(`Enter the total price for ${itemName} sold (negative value to undo):`));
+            if (isNaN(totalPrice) || totalPrice === 0) {
+                alert('Invalid total price.');
+                return;
             }
+            const quantity = totalPrice / item.defaultPrice;
+            updateSaleData(itemName, quantity, totalPrice);
+        } else {
+            const quantity = parseFloat(prompt(`Enter the quantity of ${itemName} sold (negative value to undo):`));
+            if (isNaN(quantity) || quantity === 0) {
+                alert('Invalid quantity.');
+                return;
+            }
+            const totalPrice = quantity * item.defaultPrice;
+            updateSaleData(itemName, quantity, totalPrice);
+        }
+    }
+
+
+    function updateSaleData(itemName, quantity, totalPrice) {
+        const today = new Date().toISOString().split('T')[0];
+        const item = salesData[itemName];
+
+        if (!item.salesByDate[today]) {
+            item.salesByDate[today] = { total: 0, revenue: 0 };
         }
 
-        function updateSaleData(itemName, quantity, totalPrice) {
-            const today = new Date().toISOString().split('T')[0];
-            const item = salesData[itemName];
+        // Update today's sales data
+        item.salesByDate[today].total += quantity;
+        item.salesByDate[today].revenue += totalPrice;
 
-            if (!item.salesByDate[today]) {
-                item.salesByDate[today] = { total: 0, revenue: 0 };
-            }
+        // Update total sales and revenue (allowing for negative adjustments)
+        item.totalSales += quantity;
+        item.totalRevenue += totalPrice;
 
-            item.salesByDate[today].total += quantity;
-            item.salesByDate[today].revenue += totalPrice;
+        // Ensure totals cannot drop below zero
+        if (item.totalSales < 0) item.totalSales = 0;
+        if (item.totalRevenue < 0) item.totalRevenue = 0;
 
-            item.totalSales += quantity;
-            item.totalRevenue += totalPrice;
-
-            localStorage.setItem('salesData', JSON.stringify(salesData));
-            updateTables();
-        }
+        localStorage.setItem('salesData', JSON.stringify(salesData));
+        updateTables();
+    }
 
         function updateTables() {
             updateStatsTable();
