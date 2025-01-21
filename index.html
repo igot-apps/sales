@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frozen Food Sales Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        .add-product {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .add-product input,
+        .add-product select {
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .add-product button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .add-product button:hover {
+            background-color: #218838;
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .search-bar input {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .item-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            width: 200px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .item button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin-bottom: 10px;    
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .item button:hover {
+            background-color: #0056b3;
+        }
+
+        .stats {
+            margin-top: 30px;
+        }
+
+        .stats h2 {
+            text-align: center;
+        }
+
+        .stats-table {
+            margin: 0 auto;
+            width: 80%;
+            border-collapse: collapse;
+        }
+
+        .stats-table th, .stats-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stats-table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .daily-tables {
+            margin-top: 30px;
+        }
+
+        .daily-table {
+            margin-bottom: 30px;
+        }
+
+        .daily-table h3 {
+            text-align: center;
+        }
+
+        .daily-table table {
+            margin: 0 auto;
+            width: 80%;
+            border-collapse: collapse;
+        }
+
+        .daily-table th, .daily-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .daily-table th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Frozen Food Sales Tracker</h1>
+    </header>
+    <main>
+        <section class="search-bar">
+            <input type="text" id="searchProduct" placeholder="Search for a product" oninput="filterProducts()">
+        </section>
+
+        <section class="add-product">
+            <input type="text" id="newProduct" placeholder="Enter new product name">
+            <select id="productUnit">
+                <option value="">Select unit</option>
+                <option value="kg">kg</option>
+                <option value="pcs">pcs</option>
+            </select>
+            <button onclick="addProduct()">Add Product</button>
+        </section>
+
+        <section class="item-list">
+            <!-- Items will be added dynamically -->
+        </section>
+
+        <section class="stats">
+            <h2>Sales Summary</h2>
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Unit</th>
+                        <th>Price per Unit</th>
+                        <th>Total Quantity</th>
+                        <th>Revenue</th>
+                        <th>Days Recorded</th>
+                        <th>Daily Average</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Sales stats will be added dynamically -->
+                </tbody>
+            </table>
+        </section>
+
+        <section class="daily-tables">
+            <!-- Daily tables will be added dynamically -->
+        </section>
+    </main>
+
+    <script>
+        let salesData = JSON.parse(localStorage.getItem('salesData')) || {}; // Load from localStorage or initialize as empty object
+    
+        function renderItems() {
+        const itemList = document.querySelector('.item-list');
+        itemList.innerHTML = '';
+        for (const [itemName, data] of Object.entries(salesData)) {
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('item');
+            itemDiv.innerHTML = `
+                <h4>${itemName}</h4>
+                <p>Unit: ${data.unit}</p>
+                <p>Price per ${data.unit}: ${data.defaultPrice}</p>
+                <button onclick="recordSale('${itemName}')">Record Sale</button>
+                <button onclick="deleteProduct('${itemName}')" style="background-color: #dc3545;">Delete</button>
+            `;
+            itemList.appendChild(itemDiv);
+        }
+    }
+
+    function deleteProduct(itemName) {
+        if (confirm(`Are you sure you want to delete "${itemName}"?`)) {
+            delete salesData[itemName]; // Remove product from the salesData object
+            localStorage.setItem('salesData', JSON.stringify(salesData)); // Update localStorage
+            renderItems(); // Re-render the product list
+            updateTables(); // Update stats and daily tables
+        }
+    }
+
+        function addProduct() {
+            const newProduct = document.getElementById('newProduct').value.trim();
+            const productUnit = document.getElementById('productUnit').value;
+            const defaultPrice = parseFloat(prompt('Enter the default price per unit (leave blank for none):'));
+
+            if (!newProduct || !productUnit || isNaN(defaultPrice)) {
+                alert('Please provide a valid product name, unit, and price.');
+                return;
+            }
+
+            if (salesData[newProduct]) {
+                alert('This product already exists.');
+                return;
+            }
+
+            salesData[newProduct] = {
+                unit: productUnit,
+                defaultPrice: defaultPrice,
+                totalSales: 0,
+                totalRevenue: 0,
+                salesByDate: {}
+            };
+
+            localStorage.setItem('salesData', JSON.stringify(salesData));
+            renderItems();
+            updateTables();
+        }
+
+        function recordSale(itemName) {
+            const item = salesData[itemName];
+
+            if (item.unit === 'kg') {
+                const totalPrice = parseFloat(prompt(`Enter the total price for ${itemName} sold:`));
+                if (isNaN(totalPrice) || totalPrice <= 0) {
+                    alert('Invalid total price.');
+                    return;
+                }
+                const quantity = totalPrice / item.defaultPrice;
+                updateSaleData(itemName, quantity, totalPrice);
+            } else {
+                const quantity = parseFloat(prompt(`Enter the quantity of ${itemName} sold:`));
+                if (isNaN(quantity) || quantity <= 0) {
+                    alert('Invalid quantity.');
+                    return;
+                }
+                const totalPrice = quantity * item.defaultPrice;
+                updateSaleData(itemName, quantity, totalPrice);
+            }
+        }
+
+        function updateSaleData(itemName, quantity, totalPrice) {
+            const today = new Date().toISOString().split('T')[0];
+            const item = salesData[itemName];
+
+            if (!item.salesByDate[today]) {
+                item.salesByDate[today] = { total: 0, revenue: 0 };
+            }
+
+            item.salesByDate[today].total += quantity;
+            item.salesByDate[today].revenue += totalPrice;
+
+            item.totalSales += quantity;
+            item.totalRevenue += totalPrice;
+
+            localStorage.setItem('salesData', JSON.stringify(salesData));
+            updateTables();
+        }
+
+        function updateTables() {
+            updateStatsTable();
+            renderDailyTables();
+        }
+
+        function updateStatsTable() {
+            const statsTableBody = document.querySelector('.stats-table tbody');
+            statsTableBody.innerHTML = '';
+            for (const [itemName, data] of Object.entries(salesData)) {
+                const totalDays = Object.keys(data.salesByDate).length;
+                const dailyAverage = totalDays > 0 ? data.totalSales / totalDays : 0;
+                statsTableBody.innerHTML += `
+                    <tr>
+                        <td>${itemName}</td>
+                        <td>${data.unit}</td>
+                        <td>${data.defaultPrice.toFixed(2)}</td>
+                        <td>${data.totalSales.toFixed(2)}</td>
+                        <td>${data.totalRevenue.toFixed(2)}</td>
+                        <td>${totalDays}</td>
+                        <td>${dailyAverage.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+        }
+
+        function renderDailyTables() {
+            const dailyTablesSection = document.querySelector('.daily-tables');
+            dailyTablesSection.innerHTML = '';
+            const dates = new Set();
+            Object.values(salesData).forEach(data => {
+                Object.keys(data.salesByDate).forEach(date => dates.add(date));
+            });
+
+            Array.from(dates).sort().forEach(date => {
+                const dailyTableDiv = document.createElement('div');
+                dailyTableDiv.classList.add('daily-table');
+                dailyTableDiv.innerHTML = `
+                    <h3>Sales for ${date}</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Unit</th>
+                                <th>Quantity Sold</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${generateDailyTableRows(date)}
+                        </tbody>
+                    </table>
+                `;
+                dailyTablesSection.appendChild(dailyTableDiv);
+            });
+        }
+
+        function generateDailyTableRows(date) {
+            let rows = '';
+            for (const [itemName, data] of Object.entries(salesData)) {
+                if (data.salesByDate[date]) {
+                    rows += `
+                        <tr>
+                            <td>${itemName}</td>
+                            <td>${data.unit}</td>
+                            <td>${data.salesByDate[date].total.toFixed(2)}</td>
+                            <td>${data.salesByDate[date].revenue.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+            }
+            return rows;
+        }
+
+        renderItems();
+        updateTables();
+    </script>
+</body>
+</html>
